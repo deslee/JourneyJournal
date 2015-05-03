@@ -1,0 +1,14 @@
+.alertify-notifier {
+	.ajs-message.ajs-save {
+		opacity: .65;
+		font-size: 12px;
+		width: 100px;
+		padding: 12px;
+		&.ajs-visible {
+			opacity: .65;
+			background: $base02;
+			color: $base3;
+			right: 120px;
+		}
+	}
+}
