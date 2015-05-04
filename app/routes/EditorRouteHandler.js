@@ -2,10 +2,10 @@ var React = require('react/addons');
 var Router = require('react-router');
 var RouteHandler = Router.RouteHandler;
 var alertify = window['alertify'] = require('alertifyjs')
-var sjcl = require('sjcl');
 
 var dates = require('../utilities/dates')
 var decrypt = require('../utilities/decryptEntry')
+var encrypt = require('../utilities/encryptEntry')
 function getNextSave() {
 		var d = new Date()
 		d.setSeconds(d.getSeconds() + 5);
@@ -89,11 +89,11 @@ module.exports = React.createClass({
 			alertify.notify('saving...', 'save', 1)
 		}.bind(this);
 
-		var putDoc = {
+		var putDoc = encrypt(this.props.authkey, {
 			_id: id,
-			content: sjcl.encrypt(this.props.authkey, content),
-			tags: sjcl.encrypt(this.props.authkey, this.state.tags.join(',')),
-		}
+			content: content,
+			tags: this.state.tags
+		})
 
 		if (this.state.doc) {
 			putDoc._rev = this.state.doc.rev

@@ -4,15 +4,26 @@ var Router = require('react-router');
 module.exports = React.createClass({
 	submit: function(e) {
 		if (e.keyCode===13) {
-			this.props.onAuthenticated(this.refs.password.getDOMNode().value)
+			var element = this.refs.password.getDOMNode()
+			this.props.onAuthenticated(element.value)
+			element.value = ''
 		}
 	},
+	resetDatabase: function() {
+		this.props.clearDatabaseAndDeauthenticate()
+		alertify.error('Journal reset!', 1)
+	},
 	render: function() {
+		var placeholder = (this.props.verifyKey) ? 'verify password' : 'enter a password' 
+
+		var resetpw = (this.props.wrongAttempts >= 3) ? <div onClick={this.resetDatabase} className="reset_password_button"><p>forgot your password?</p><p>click here to delete the journal and start over</p></div> : undefined
+
 		return (<div className="auth_wrapper">
 				<div>
 					<i className="fa fa-lock"></i>
-					<input placeholder="enter a password" type="password" autoFocus="true" ref="password" onKeyDown={this.submit}/>
+					<input placeholder={placeholder} type="password" autoFocus="true" ref="password" onKeyDown={this.submit}/>
 				</div>
+				{resetpw}
 		</div>)
 	}
 });

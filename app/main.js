@@ -13,6 +13,7 @@ var NotFoundRouteHandler = require('./routes/NotFoundRouteHandler');
 var SettingsRouteHandler = require('./routes/SettingsRouteHandler');
 var EditorRouteHandler = require('./routes/EditorRouteHandler');
 var IndexRouteHandler = require('./routes/IndexRouteHandler');
+var restoreRouteHandler = require('./routes/restoreRouteHandler');
 /* deslight require hook - do not modify this line */
 
 var routes = (
@@ -21,6 +22,7 @@ var routes = (
 		<Route handler={EditorRouteHandler} name="editor" path='editor/:id'/>
 		<NotFoundRoute handler={NotFoundRouteHandler} />
 		<Route handler={SettingsRouteHandler} name='settings' path='settings'/>
+<Route handler={restoreRouteHandler} name='restore' path='restore'/>
 /* deslight route hook - do not modify this line */
 	</Route>
 );

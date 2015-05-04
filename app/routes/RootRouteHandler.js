@@ -6,33 +6,60 @@ var PouchDB = require('pouchdb');
 var sjcl = require('sjcl')
 var alertify = require('alertifyjs')
 
-var db = new PouchDB('journey_app', {auto_compaction: true});
-window['db'] = db; //debugging
-
+function createDB() {
+	var db = new PouchDB('journey_app', {auto_compaction: true});
+	return db;
+}
 
 module.exports = React.createClass({
-	mixins: [ Router.State ],
+	mixins: [ Router.State, Router.Navigation ],
 	componentWillMount: function() {
 		document.addEventListener("pause", function() {
-			this.setState({key: undefined})
+			this.setState({key: undefined, wrongAttempts: 0})
 		}.bind(this), false);
 	},
 	componentWillUnmount: function() {
 
 	},
+	createMetadata: function(key) {
+		this.state.db.put({
+			_id: 'journey_metadata',
+			verify: sjcl.encrypt(key, 'journey journal'),
+			nextId: 0		
+		}).then(function(response) {
+		}).catch(function(e) {
+			console.log(e)
+		})
+	},
 	getInitialState: function() {
 		return {
-			key: undefined
+			key: undefined,
+			db: createDB(), 
+			wrongAttempts: 0,
+			verifyKey: false
 		}
 	},
+	clearDatabaseAndDeauthenticate: function() {
+		this.state.db.destroy().then(function() {
+			this.transitionTo('index');
+			this.setState({
+				db: createDB(),
+				key: undefined,
+				wrongAttempts: 0
+			})
+		}.bind(this))
+	},
 	setKey: function(key) {
-		db.get('journey_metadata').then(function(doc) {
+		this.state.db.get('journey_metadata').then(function(doc) {
 			try {
 				var result = sjcl.decrypt(key, doc.verify)
 				this.setState({key: key})
 			}
 			catch(err) {
 				if (err.message === "ccm: tag doesn't match") {
+					this.setState({
+						wrongAttempts: this.state.wrongAttempts+1
+					})
 					alertify.error('Wrong!', 1)
 				}
 				else {
@@ -42,16 +69,30 @@ module.exports = React.createClass({
 
 		}.bind(this)).catch(function(e) {
 			if (e.status===404) {
-				createMetadata(key)
-				this.setState({key: key})
-			}		
+				if (!this.state.verifyKey) {
+					this.setState({wrongAttempts: 0, verifyKey: key})
+				}
+				else {
+					if (key === this.state.verifyKey) {
+						this.createMetadata(key)
+						this.setState({key: key})
+					}
+					else {
+
+					}
+					this.setState({verifyKey: false});
+				}
+			}
+			else {
+				console.log(e)
+			}
 		}.bind(this))
 	},
 	render: function() {
-		var handler = <RouteHandler db={db} foo="bar" authkey={this.state.key} />
+		var handler = <RouteHandler db={this.state.db} foo="bar" authkey={this.state.key} clearDatabaseAndDeauthenticate={this.clearDatabaseAndDeauthenticate} />
 
 		if (!this.state.key) {
-			handler = <Authenticate onAuthenticated={this.setKey} />
+			handler = <Authenticate onAuthenticated={this.setKey} wrongAttempts={this.state.wrongAttempts} verifyKey={this.state.verifyKey} clearDatabaseAndDeauthenticate={this.clearDatabaseAndDeauthenticate}/>
 		}
 
 		
@@ -65,13 +106,3 @@ module.exports = React.createClass({
 	}
 });
 
-function createMetadata(key) {
-	db.put({
-		_id: 'journey_metadata',
-		verify: sjcl.encrypt(key, 'journey journal'),
-		nextId: 0		
-	}).then(function(response) {
-	}).catch(function(e) {
-		console.log(e)
-	})
-}
