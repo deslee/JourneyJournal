@@ -38,7 +38,7 @@ module.exports = React.createClass({
 	},
 	render: function() {
 		var backupText = this.state.backingUp ? 'Backing up' : 'Backup to drive'
-		var restoreText = this.state.restoring ? 'Restoring' : 'Restore from drive'
+		var restoreText = this.state.restoring ? 'Restoring' : 'Restore from drive (experimental)'
 		return (<div>
 			<button onClick={this.backup}>{backupText}</button><br />
 			<button onClick={this.restore}>{restoreText}</button><br />

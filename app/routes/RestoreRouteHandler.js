@@ -13,17 +13,7 @@ module.exports = React.createClass({
 		}
 	},
 	componentWillMount: function() {
-		var getFile = function(file) {
-			gapi.client.drive.files.get({
-				fileId: file.id,
-				alt:'media'
-			}).execute(function(response) {
-				console.log(response);
-			})
-		}.bind(this)
-
 		var fileListReceived = function(files) {
-			console.log(files);
 			if (files.length == 0) {
 				var message = "No files in Drive"
 				alertify.alert(message).set('title', 'Info').set('onok', function(){
@@ -59,14 +49,37 @@ module.exports = React.createClass({
 		});
 	},
 	restoreFromFile: function(file) {
-		this.transitionTo('index')
+		getFile(file, function(data) {
+			var journal = JSON.parse(data).map(function(doc){
+				delete doc._rev
+				return doc
+			})
+			this.props.clearDatabaseAndDeauthenticate(journal);
+		}.bind(this))
+	},
+	deleteFile: function(file) {
+		var message = "Are you sure?\nThis cannot be undone!"
+		alertify.confirm(message).set('title', 'Delete Journal').set('labels', {ok:'Yes', cancel:'No'}).set('onok', function(){
+			file.deleting = true;
+			this.setState({files: this.state.files})
+			confirmAuthorized(function() {
+				gapi.client.drive.files.delete({fileId:file.id}).execute(function() {
+					var files = this.state.files.filter(function(f) {
+						return f.id !== file.id					   
+					})
+					this.setState({files: files})
+				}.bind(this))
+			}.bind(this));
+		}.bind(this))
 	},
 	render: function() {
-		console.log(this.state.loading);
 		var fileButtons = this.state.loading === false ? (
 			<div>
 			{this.state.files.map(function(file) {
-				return <button key={file.id} onClick={this.restoreFromFile.bind(this, file)}>{file.title}</button>									  
+				return <div className="buttonGroup" key={file.id} >
+					<button className="restore_btn" onClick={this.restoreFromFile.bind(this, file)}>{file.title}</button>
+					<button className={"delete_btn"+(file.deleting ? ' deleting' : '')} onClick={this.deleteFile.bind(this, file)}>Delete</button>
+				</div>									  
 			}.bind(this))} 
 			</div>
 	   ) : <p>Loading</p>
@@ -80,3 +93,13 @@ module.exports = React.createClass({
 		);
 	}
 });
+
+
+function getFile(file, callback) {
+	gapi.client.drive.files.get({
+		fileId: file.id,
+		alt:'media'
+	}).execute(function(response) {
+		callback(response)
+	})
+}

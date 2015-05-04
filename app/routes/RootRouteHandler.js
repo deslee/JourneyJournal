@@ -6,9 +6,18 @@ var PouchDB = require('pouchdb');
 var sjcl = require('sjcl')
 var alertify = require('alertifyjs')
 
-function createDB() {
+function createDB(journal, callback) {
 	var db = new PouchDB('journey_app', {auto_compaction: true});
-	return db;
+	if (journal) {
+		db.bulkDocs(journal).then(function(result) {
+			callback(db)
+		}).catch(function(){
+			console.log(err);	
+		});
+	}
+	else {
+		callback(db)
+	}
 }
 
 module.exports = React.createClass({
@@ -17,6 +26,15 @@ module.exports = React.createClass({
 		document.addEventListener("pause", function() {
 			this.setState({key: undefined, wrongAttempts: 0})
 		}.bind(this), false);
+
+		createDB(null, function(db) {
+			this.setState({
+				key: undefined,
+				db: db, 
+				wrongAttempts: 0,
+				verifyKey: false
+			})
+		}.bind(this))
 	},
 	componentWillUnmount: function() {
 
@@ -31,22 +49,16 @@ module.exports = React.createClass({
 			console.log(e)
 		})
 	},
-	getInitialState: function() {
-		return {
-			key: undefined,
-			db: createDB(), 
-			wrongAttempts: 0,
-			verifyKey: false
-		}
-	},
-	clearDatabaseAndDeauthenticate: function() {
+	clearDatabaseAndDeauthenticate: function(journal) {
 		this.state.db.destroy().then(function() {
-			this.transitionTo('index');
-			this.setState({
-				db: createDB(),
-				key: undefined,
-				wrongAttempts: 0
-			})
+			createDB(journal, function(db) {
+				this.setState({
+					db: db,
+					key: undefined,
+					wrongAttempts: 0
+				})
+				this.transitionTo('index');
+			}.bind(this));
 		}.bind(this))
 	},
 	setKey: function(key) {
