@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="journey.deslee.me" version="0.0.2" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Journey</name>
+    <icon src="res/mipmap-xxxhdpi/ic_launcher.png" />
+    <description>
+			A simple encrypted offline journal
+    </description>
+    <author email="desmond.c.lee@gmail.com" href="http://deslee.me">
+			Desmond Lee
+    </author>
+    <content src="index.html" />
+    <access origin="*" />
+</widget>
