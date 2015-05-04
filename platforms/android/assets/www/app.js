@@ -1,5 +1,27 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var React = require('react/addons');
+
+console.log('is this a component??')
+
+module.exports = React.createClass({displayName: "exports",
+	getInitialState: function() {
+		console.log("MOUNT???");
+		return {
+
+		}
+	},
+	render: function() {
+		return (
+			React.createElement("div", null, 
+				"hihi"
+			)
+		);
+	}
+});
+
+
+},{"react/addons":"oWaOtE"}],2:[function(require,module,exports){
+var React = require('react/addons');
 var Router = require('react-router');
 
 var Route = Router.Route;
@@ -35,7 +57,7 @@ document.addEventListener('deviceReady', function() {
 
 
 
-},{"./routes/EditorRouteHandler":2,"./routes/IndexRouteHandler":3,"./routes/NotFoundRouteHandler":4,"./routes/RootRouteHandler":5,"./routes/SettingsRouteHandler":6,"react-router":"vYZgCY","react/addons":"yutbdK"}],2:[function(require,module,exports){
+},{"./routes/EditorRouteHandler":3,"./routes/IndexRouteHandler":4,"./routes/NotFoundRouteHandler":5,"./routes/RootRouteHandler":6,"./routes/SettingsRouteHandler":7,"react-router":"TIQRyI","react/addons":"oWaOtE"}],3:[function(require,module,exports){
 var React = require('react/addons');
 var Router = require('react-router');
 var RouteHandler = Router.RouteHandler;
@@ -250,7 +272,7 @@ module.exports = React.createClass({displayName: "exports",
 });
 
 
-},{"../utilities/dates":8,"../utilities/decryptEntry":9,"alertifyjs":"YeVBtY","react-router":"vYZgCY","react/addons":"yutbdK","sjcl":19}],3:[function(require,module,exports){
+},{"../utilities/dates":9,"../utilities/decryptEntry":10,"alertifyjs":"WhmgK1","react-router":"TIQRyI","react/addons":"oWaOtE","sjcl":20}],4:[function(require,module,exports){
 var React = require('react/addons');
 var Router = require('react-router');
 var RouteHandler = Router.RouteHandler;
@@ -369,7 +391,7 @@ module.exports = React.createClass({displayName: "exports",
 });
 
 
-},{"../utilities/decryptEntry":9,"react-router":"vYZgCY","react/addons":"yutbdK"}],4:[function(require,module,exports){
+},{"../utilities/decryptEntry":10,"react-router":"TIQRyI","react/addons":"oWaOtE"}],5:[function(require,module,exports){
 var React = require('react/addons');
 var Router = require('react-router');
 var RouteHandler = Router.RouteHandler;
@@ -388,7 +410,7 @@ module.exports = React.createClass({displayName: "exports",
 });
 
 
-},{"react-router":"vYZgCY","react/addons":"yutbdK"}],5:[function(require,module,exports){
+},{"react-router":"TIQRyI","react/addons":"oWaOtE"}],6:[function(require,module,exports){
 var React = require('react/addons');
 var Router = require('react-router');
 var RouteHandler = Router.RouteHandler;
@@ -397,33 +419,60 @@ var PouchDB = require('pouchdb');
 var sjcl = require('sjcl')
 var alertify = require('alertifyjs')
 
-var db = new PouchDB('journey_app', {auto_compaction: true});
-window['db'] = db; //debugging
-
+function createDB() {
+	var db = new PouchDB('journey_app', {auto_compaction: true});
+	return db;
+}
 
 module.exports = React.createClass({displayName: "exports",
-	mixins: [ Router.State ],
+	mixins: [ Router.State, Router.Navigation ],
 	componentWillMount: function() {
 		document.addEventListener("pause", function() {
-			this.setState({key: undefined})
+			this.setState({key: undefined, wrongAttempts: 0})
 		}.bind(this), false);
 	},
 	componentWillUnmount: function() {
 
 	},
+	createMetadata: function(key) {
+		this.state.db.put({
+			_id: 'journey_metadata',
+			verify: sjcl.encrypt(key, 'journey journal'),
+			nextId: 0		
+		}).then(function(response) {
+		}).catch(function(e) {
+			console.log(e)
+		})
+	},
 	getInitialState: function() {
 		return {
-			key: undefined
+			key: undefined,
+			db: createDB(), 
+			wrongAttempts: 0,
+			verifyKey: false
 		}
 	},
+	clearDatabaseAndDeauthenticate: function() {
+		this.state.db.destroy().then(function() {
+			this.transitionTo('index');
+			this.setState({
+				db: createDB(),
+				key: undefined,
+				wrongAttempts: 0
+			})
+		}.bind(this))
+	},
 	setKey: function(key) {
-		db.get('journey_metadata').then(function(doc) {
+		this.state.db.get('journey_metadata').then(function(doc) {
 			try {
 				var result = sjcl.decrypt(key, doc.verify)
 				this.setState({key: key})
 			}
 			catch(err) {
 				if (err.message === "ccm: tag doesn't match") {
+					this.setState({
+						wrongAttempts: this.state.wrongAttempts+1
+					})
 					alertify.error('Wrong!', 1)
 				}
 				else {
@@ -433,16 +482,30 @@ module.exports = React.createClass({displayName: "exports",
 
 		}.bind(this)).catch(function(e) {
 			if (e.status===404) {
-				createMetadata(key)
-				this.setState({key: key})
-			}		
+				if (!this.state.verifyKey) {
+					this.setState({wrongAttempts: 0, verifyKey: key})
+				}
+				else {
+					if (key === this.state.verifyKey) {
+						this.createMetadata(key)
+						this.setState({key: key})
+					}
+					else {
+
+					}
+					this.setState({verifyKey: false});
+				}
+			}
+			else {
+				console.log(e)
+			}
 		}.bind(this))
 	},
 	render: function() {
-		var handler = React.createElement(RouteHandler, {db: db, foo: "bar", authkey: this.state.key})
+		var handler = React.createElement(RouteHandler, {db: this.state.db, foo: "bar", authkey: this.state.key, clearDatabaseAndDeauthenticate: this.clearDatabaseAndDeauthenticate})
 
 		if (!this.state.key) {
-			handler = React.createElement(Authenticate, {onAuthenticated: this.setKey})
+			handler = React.createElement(Authenticate, {onAuthenticated: this.setKey, wrongAttempts: this.state.wrongAttempts, verifyKey: this.state.verifyKey, clearDatabaseAndDeauthenticate: this.clearDatabaseAndDeauthenticate})
 		}
 
 		
@@ -456,24 +519,16 @@ module.exports = React.createClass({displayName: "exports",
 	}
 });
 
-function createMetadata(key) {
-	db.put({
-		_id: 'journey_metadata',
-		verify: sjcl.encrypt(key, 'journey journal'),
-		nextId: 0		
-	}).then(function(response) {
-	}).catch(function(e) {
-		console.log(e)
-	})
-}
 
 
-},{"./authenticate":7,"alertifyjs":"YeVBtY","pouchdb":"Ztn7p+","react-router":"vYZgCY","react/addons":"yutbdK","sjcl":19}],6:[function(require,module,exports){
+},{"./authenticate":8,"alertifyjs":"WhmgK1","pouchdb":"kjoiFI","react-router":"TIQRyI","react/addons":"oWaOtE","sjcl":20}],7:[function(require,module,exports){
 var React = require('react/addons');
 var Router = require('react-router');
 var RouteHandler = Router.RouteHandler;
 var decrypt = require('../utilities/decryptEntry')
 var alertify = require('alertifyjs')
+
+var gapi = require('../components/gapi')
 
 module.exports = React.createClass({displayName: "exports",
 	mixins: [ Router.State, Router.Navigation],
@@ -511,10 +566,7 @@ module.exports = React.createClass({displayName: "exports",
 	deleteJournal: function() {
 		var message = "Are you sure?\nThis cannot be undone!"
 		alertify.confirm(message).set('title', 'Delete Journal').set('labels', {ok:'Yes', cancel:'No'}).set('onok', function(){
-			this.props.db.destroy().then(function() {
-				this.transitionTo('index')
-				location.reload()
-			}.bind(this));
+			this.props.clearDatabaseAndDeauthenticate();
 		}.bind(this))
 	},
 	render: function() {
@@ -528,6 +580,9 @@ module.exports = React.createClass({displayName: "exports",
 					)
 				), 
 				React.createElement("div", {className: "content"}, 
+
+				React.createElement("gapi", null), 
+
 					React.createElement("button", {onClick: this.exportFile.bind(this, false)}, "Export to json (encrypted)"), React.createElement("br", null), 
 					React.createElement("button", {onClick: this.exportFile.bind(this, true)}, "Export to json (decrypted)"), React.createElement("br", null), 
 
@@ -541,28 +596,39 @@ module.exports = React.createClass({displayName: "exports",
 });
 
 
-},{"../utilities/decryptEntry":9,"alertifyjs":"YeVBtY","react-router":"vYZgCY","react/addons":"yutbdK"}],7:[function(require,module,exports){
+},{"../components/gapi":1,"../utilities/decryptEntry":10,"alertifyjs":"WhmgK1","react-router":"TIQRyI","react/addons":"oWaOtE"}],8:[function(require,module,exports){
 var React = require('react/addons');
 var Router = require('react-router');
 
 module.exports = React.createClass({displayName: "exports",
 	submit: function(e) {
 		if (e.keyCode===13) {
-			this.props.onAuthenticated(this.refs.password.getDOMNode().value)
+			var element = this.refs.password.getDOMNode()
+			this.props.onAuthenticated(element.value)
+			element.value = ''
 		}
 	},
+	resetDatabase: function() {
+		this.props.clearDatabaseAndDeauthenticate()
+		alertify.error('Journal reset!', 1)
+	},
 	render: function() {
+		var placeholder = (this.props.verifyKey) ? 'verify password' : 'enter a password' 
+
+		var resetpw = (this.props.wrongAttempts >= 3) ? React.createElement("div", {onClick: this.resetDatabase, className: "reset_password_button"}, React.createElement("p", null, "forgot your password?"), React.createElement("p", null, "click here to delete the journal and start over")) : undefined
+
 		return (React.createElement("div", {className: "auth_wrapper"}, 
 				React.createElement("div", null, 
 					React.createElement("i", {className: "fa fa-lock"}), 
-					React.createElement("input", {placeholder: "enter a password", type: "password", autoFocus: "true", ref: "password", onKeyDown: this.submit})
-				)
+					React.createElement("input", {placeholder: placeholder, type: "password", autoFocus: "true", ref: "password", onKeyDown: this.submit})
+				), 
+				resetpw
 		))
 	}
 });
 
 
-},{"react-router":"vYZgCY","react/addons":"yutbdK"}],8:[function(require,module,exports){
+},{"react-router":"TIQRyI","react/addons":"oWaOtE"}],9:[function(require,module,exports){
 module.exports = {
     convert:function(d) {
         // Converts the date in d to a date-object. The input can be:
@@ -616,7 +682,7 @@ module.exports = {
 }
 
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var sjcl = require('sjcl')
 
 module.exports = function(key, entry) {
@@ -629,7 +695,7 @@ module.exports = function(key, entry) {
 }
 
 
-},{"sjcl":19}],10:[function(require,module,exports){
+},{"sjcl":20}],11:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -1740,7 +1806,8 @@ function assert (test, message) {
   if (!test) throw new Error(message || 'Failed assertion')
 }
 
-},{"base64-js":11,"ieee754":12}],11:[function(require,module,exports){
+
+},{"base64-js":12,"ieee754":13}],12:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -1866,7 +1933,8 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],12:[function(require,module,exports){
+
+},{}],13:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -1952,7 +2020,8 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],13:[function(require,module,exports){
+
+},{}],14:[function(require,module,exports){
 var Buffer = require('buffer').Buffer;
 var intSize = 4;
 var zeroBuffer = new Buffer(intSize); zeroBuffer.fill(0);
@@ -1989,7 +2058,8 @@ function hash(buf, fn, hashSize, bigEndian) {
 
 module.exports = { hash: hash };
 
-},{"buffer":10}],14:[function(require,module,exports){
+
+},{"buffer":11}],15:[function(require,module,exports){
 var Buffer = require('buffer').Buffer
 var sha = require('./sha')
 var sha256 = require('./sha256')
@@ -2088,7 +2158,8 @@ each(['createCredentials'
   }
 })
 
-},{"./md5":15,"./rng":16,"./sha":17,"./sha256":18,"buffer":10}],15:[function(require,module,exports){
+
+},{"./md5":16,"./rng":17,"./sha":18,"./sha256":19,"buffer":11}],16:[function(require,module,exports){
 /*
  * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
  * Digest Algorithm, as defined in RFC 1321.
@@ -2253,7 +2324,8 @@ module.exports = function md5(buf) {
   return helpers.hash(buf, core_md5, 16);
 };
 
-},{"./helpers":13}],16:[function(require,module,exports){
+
+},{"./helpers":14}],17:[function(require,module,exports){
 // Original code adapted from Robert Kieffer.
 // details at https://github.com/broofa/node-uuid
 (function() {
@@ -2286,7 +2358,8 @@ module.exports = function md5(buf) {
 
 }())
 
-},{}],17:[function(require,module,exports){
+
+},{}],18:[function(require,module,exports){
 /*
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-1, as defined
  * in FIPS PUB 180-1
@@ -2389,7 +2462,8 @@ module.exports = function sha1(buf) {
   return helpers.hash(buf, core_sha1, 20, true);
 };
 
-},{"./helpers":13}],18:[function(require,module,exports){
+
+},{"./helpers":14}],19:[function(require,module,exports){
 
 /**
  * A JavaScript implementation of the Secure Hash Algorithm, SHA-256, as defined
@@ -2470,7 +2544,8 @@ module.exports = function sha256(buf) {
   return helpers.hash(buf, core_sha256, 32, true);
 };
 
-},{"./helpers":13}],19:[function(require,module,exports){
+
+},{"./helpers":14}],20:[function(require,module,exports){
 "use strict";function q(a){throw a;}var s=void 0,u=!1;var sjcl={cipher:{},hash:{},keyexchange:{},mode:{},misc:{},codec:{},exception:{corrupt:function(a){this.toString=function(){return"CORRUPT: "+this.message};this.message=a},invalid:function(a){this.toString=function(){return"INVALID: "+this.message};this.message=a},bug:function(a){this.toString=function(){return"BUG: "+this.message};this.message=a},notReady:function(a){this.toString=function(){return"NOT READY: "+this.message};this.message=a}}};
 "undefined"!==typeof module&&module.exports&&(module.exports=sjcl);"function"===typeof define&&define([],function(){return sjcl});
 sjcl.cipher.aes=function(a){this.k[0][0][0]||this.D();var b,c,d,e,f=this.k[0][4],g=this.k[1];b=a.length;var h=1;4!==b&&(6!==b&&8!==b)&&q(new sjcl.exception.invalid("invalid aes key size"));this.b=[d=a.slice(0),e=[]];for(a=b;a<4*b+28;a++){c=d[a-1];if(0===a%b||8===b&&4===a%b)c=f[c>>>24]<<24^f[c>>16&255]<<16^f[c>>8&255]<<8^f[c&255],0===a%b&&(c=c<<8^c>>>24^h<<24,h=h<<1^283*(h>>7));d[a]=d[a-b]^c}for(b=0;a;b++,a--)c=d[b&3?a:a-4],e[b]=4>=a||4>b?c:g[0][f[c>>>24]]^g[1][f[c>>16&255]]^g[2][f[c>>8&255]]^g[3][f[c&
@@ -2526,4 +2601,5 @@ a.replace(/\s/g,"");a.match(/^\{.*\}$/)||q(new sjcl.exception.invalid("json deco
 d[5]);return b},e:function(a,b,c){a===s&&(a={});if(b===s)return a;for(var d in b)b.hasOwnProperty(d)&&(c&&(a[d]!==s&&a[d]!==b[d])&&q(new sjcl.exception.invalid("required parameter overridden")),a[d]=b[d]);return a},fa:function(a,b){var c={},d;for(d in a)a.hasOwnProperty(d)&&a[d]!==b[d]&&(c[d]=a[d]);return c},ea:function(a,b){var c={},d;for(d=0;d<b.length;d++)a[b[d]]!==s&&(c[b[d]]=a[b[d]]);return c}};sjcl.encrypt=sjcl.json.encrypt;sjcl.decrypt=sjcl.json.decrypt;sjcl.misc.ca={};
 sjcl.misc.cachedPbkdf2=function(a,b){var c=sjcl.misc.ca,d;b=b||{};d=b.iter||1E3;c=c[a]=c[a]||{};d=c[d]=c[d]||{firstSalt:b.salt&&b.salt.length?b.salt.slice(0):sjcl.random.randomWords(2,0)};c=b.salt===s?d.firstSalt:b.salt;d[c]=d[c]||sjcl.misc.pbkdf2(a,c,b.iter);return{key:d[c].slice(0),salt:c.slice(0)}};
 
-},{"crypto":14}]},{},[1])
+
+},{"crypto":15}]},{},[2])
