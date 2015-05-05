@@ -1,5 +1,6 @@
 var React = require('react/addons');
 var Router = require('react-router');
+var ensureLoaded = require('./utilities/ensureGapiLoaded')
 
 var Route = Router.Route;
 var Link = Router.Link;
@@ -27,10 +28,20 @@ var routes = (
 	</Route>
 );
 
-document.addEventListener('deviceReady', function() {
-	Router.run(routes, function(Handler) {
-		React.render(<Handler />, document.getElementById('root_journey'));
-	});
-}, false)
 
+function init() {
+	ensureLoaded(function() {
+		Router.run(routes, function(Handler) {
+				   React.render(<Handler />, document.getElementById('root_journey'));
+		});
+	})
+}
 
+if (typeof(device) != 'undefined' && device.platform !== 'browser') {
+		document.addEventListener('deviceReady', function() {
+			init()
+		}, false)
+}
+else {
+	init()
+}

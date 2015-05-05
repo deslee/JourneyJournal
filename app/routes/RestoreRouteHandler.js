@@ -1,8 +1,8 @@
 var React = require('react/addons');
 var Router = require('react-router');
 var RouteHandler = Router.RouteHandler;
-var confirmAuthorized = require('../utilities/confirmAuthorized')
 var alertify = require('alertifyjs')
+var handleGapiRequest = require('../utilities/gapiHandler')
 
 module.exports = React.createClass({
 	mixins: [ Router.State, Router.Navigation ],
@@ -27,7 +27,11 @@ module.exports = React.createClass({
 		}.bind(this)
 
 		var retrievePageOfFiles = function(request, result) {
-			request.execute(function(resp) {
+			handleGapiRequest(request, function(e, resp) {
+				if (e) {
+					console.log(e)
+					return
+				}
 				result = result.concat(resp.items);
 				var nextPageToken = resp.nextPageToken;
 				if (nextPageToken) {
@@ -38,15 +42,13 @@ module.exports = React.createClass({
 				} else {
 					fileListReceived(result);
 				}
-			});
+			}.bind(this))
 		}
 
-		confirmAuthorized(function() {
-			var initialRequest = gapi.client.drive.files.list({
-				'q': '\'appfolder\' in parents'
-			});
-			retrievePageOfFiles(initialRequest, []);
+		var initialRequest = gapi.client.drive.files.list({
+			'q': '\'appfolder\' in parents'
 		});
+		retrievePageOfFiles(initialRequest, []);
 	},
 	restoreFromFile: function(file) {
 		getFile(file, function(data) {
@@ -60,16 +62,17 @@ module.exports = React.createClass({
 	deleteFile: function(file) {
 		var message = "Are you sure?\nThis cannot be undone!"
 		alertify.confirm(message).set('title', 'Delete Journal').set('labels', {ok:'Yes', cancel:'No'}).set('onok', function(){
+
 			file.deleting = true;
-			this.setState({files: this.state.files})
-			confirmAuthorized(function() {
-				gapi.client.drive.files.delete({fileId:file.id}).execute(function() {
-					var files = this.state.files.filter(function(f) {
-						return f.id !== file.id					   
-					})
-					this.setState({files: files})
-				}.bind(this))
-			}.bind(this));
+
+			var request = gapi.client.drive.files.delete({fileId:file.id})
+
+			handleGapiRequest(request, function() {
+				var files = this.state.files.filter(function(f) {
+					return f.id !== file.id					   
+				})
+				this.setState({files: files})
+			}.bind(this))
 		}.bind(this))
 	},
 	render: function() {
@@ -93,7 +96,6 @@ module.exports = React.createClass({
 		);
 	}
 });
-
 
 function getFile(file, callback) {
 	gapi.client.drive.files.get({

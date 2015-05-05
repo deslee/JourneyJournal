@@ -1,6 +1,6 @@
 var React = require('react/addons');
 var Router = require('react-router');
-var confirmAuthorized = require('../utilities/confirmAuthorized')
+var handleGapiRequest = require('../utilities/gapiHandler')
 
 module.exports = React.createClass({
 	mixins: [ Router.State, Router.Navigation ],
@@ -16,15 +16,15 @@ module.exports = React.createClass({
 		}
 
 		this.setState({backingUp: true})
-		confirmAuthorizedAndGetDocs(this.props.db, function(err, results) {
+		this.loadDocuments(function(err, results) {
 			if (err) {
-				this.setState({backingUp: false})
-				console.log(err);
-				return;
+				console.log(err)
+				return
 			}
 			var json = JSON.stringify(results);
 			var pause = 2
-			uploadBackupToDrive(json, function() {
+
+			uploadBackupToDrive(json, function(e) {
 				alertify.message('Backed up Journal', pause);
 				setTimeout(function() {
 					this.setState({backingUp: false})
@@ -32,9 +32,22 @@ module.exports = React.createClass({
 			}.bind(this));
 		}.bind(this))
 	},
-
 	restore: function() {
 		this.transitionTo('restore')
+	},
+	loadDocuments: function(callback) {
+		this.props.db.allDocs({
+			include_docs: true,
+		}).then(function(results) {
+			var results = results.rows.map(function(doc){
+				var entry = doc.doc;
+				return entry
+			}.bind(this));
+			callback(null, results)
+		}.bind(this))
+		.catch(function(e) {
+			callback(e)
+		});
 	},
 	render: function() {
 		var backupText = this.state.backingUp ? 'Backing up' : 'Backup to drive'
@@ -83,29 +96,5 @@ function uploadBackupToDrive(json, callback) {
 		},
 		'body': multipartRequestBody
 	});
-	request.execute(function(response) {
-		callback()
-	});
-
-
-}
-
-function confirmAuthorizedAndGetDocs(db, callback) {
-	confirmAuthorized(function() {
-		// load documents
-		db.allDocs({
-			include_docs: true,
-		}).then(function(results) {
-			var results = results.rows.map(function(doc){
-				var entry = doc.doc;
-				return entry
-			}.bind(this));
-
-			callback(null, results)
-
-		}.bind(this))
-		.catch(function(e) {
-			callback(e)
-		});
-	})
+	handleGapiRequest(request, callback)
 }

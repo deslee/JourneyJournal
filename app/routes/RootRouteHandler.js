@@ -75,6 +75,7 @@ module.exports = React.createClass({
 					alertify.error('Wrong!', 1)
 				}
 				else {
+					console.log(err);
 					console.log(err.stack);
 				}
 			}
