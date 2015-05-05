@@ -104,7 +104,7 @@ function getAuthorizationCode(callback) {
 		case 'browser':
 			getAuthorizationCodeBrowser(callback)
 		break;
-		case 'android':
+		case 'Android':
 			getAuthorizationCodeWebview(callback)
 	}
 }
@@ -119,7 +119,12 @@ function _ensureAuthorized(callback) {
 	var token = localStorage.getItem('token')
 	if (token) {
 		if (!gapi.auth.getToken()) {
-			gapi.auth.setToken(JSON.parse(token))
+			try {
+				gapi.auth.setToken(JSON.parse(token))
+			} catch(e) {
+				delete localStorage.token
+				_ensureAuthorized(callback)
+			}
 		}
 		// hooray! we are authorized!
 		callback()
