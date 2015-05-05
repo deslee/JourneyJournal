@@ -4,4 +4,4 @@ bower_components/
 *.un~
 platforms/
 android/assets/
-
+server/secret.js
