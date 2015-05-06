@@ -174,6 +174,12 @@ module.exports = React.createClass({
 			this.addTagFromElement(this.refs.tags.getDOMNode());
 		}
 	},
+	focus: function() {
+		this.setState({focused: true})
+	},
+	blur: function() {
+		this.setState({focused: false})
+	},
 	focusTagsInput: function() {
 		this.refs.tags.getDOMNode().focus();
 	},
@@ -199,9 +205,9 @@ module.exports = React.createClass({
 					{deleteElement}
 				</div>
 
-				<textarea onChange={this.changed} ref="editor" className="content journey_editor" value={this.state.content}>
+				<textarea onFocus={this.focus} onBlur={this.blur} onChange={this.changed} ref="editor" className="content journey_editor" value={this.state.content}>
 				</textarea>
-				<div className="journey_toolbar entry_tags">
+				<div className={"journey_toolbar entry_tags" + (this.state.focused ? ' hide' : '')}>
 					<div className="entry_tags_container">
 					<i className="fa fa-tags" onClick={this.focusTagsInput}></i>
 						{this.state.tags.map(function(tag) {
@@ -209,7 +215,7 @@ module.exports = React.createClass({
 						}.bind(this))}
 					</div>
 				</div>
-				<div className="journey_toolbar entry_tags_input" >
+				<div className={"journey_toolbar entry_tags_input" + (this.state.focused ? ' hide':'')} >
 					<input className="" onInput={this.tagsInputChanged} onKeyDown={this.tagKeyDown} ref="tags"/>
 				</div>
 			</div>
