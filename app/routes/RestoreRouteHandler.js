@@ -65,7 +65,7 @@ module.exports = React.createClass({
 	},
 	deleteFile: function(file) {
 		var message = "Are you sure?\nThis cannot be undone!"
-		alertify.confirm(message).set('title', 'Delete Journal').set('labels', {ok:'Yes', cancel:'No'}).set('onok', function(){
+		alertify.confirm(message).set('title', 'Delete backup').set('labels', {ok:'Yes', cancel:'No'}).set('onok', function(){
 
 			file.deleting = true;
 

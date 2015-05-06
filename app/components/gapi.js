@@ -26,6 +26,11 @@ module.exports = React.createClass({
 			var pause = 2
 
 			uploadBackupToDrive(json, function(e) {
+				if (e) {
+					console.log(e)
+					this.setState({backingUp: false})
+					return
+				}
 				alertify.message('Backed up Journal', pause);
 				setTimeout(function() {
 					this.setState({backingUp: false})
@@ -71,7 +76,8 @@ function uploadBackupToDrive(json, callback) {
 	var fileName = prompt('Choose a name for this backup', dateString);
 
 	if (fileName == null) {
-		return;
+		callback('canceled')
+		return
 	}
 	fileName = fileName + '.json'
 
