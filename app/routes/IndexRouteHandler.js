@@ -2,6 +2,7 @@ var React = require('react/addons');
 var Router = require('react-router');
 var RouteHandler = Router.RouteHandler;
 var decrypt = require('../utilities/decryptEntry')
+var moment = require('moment')
 
 module.exports = React.createClass({
 	mixins: [ Router.State, Router.Navigation ],
@@ -24,7 +25,12 @@ module.exports = React.createClass({
 				var results = results.rows.map(function(doc){
 					var entry = decrypt(this.props.authkey, doc.doc);
 					return entry
-				}.bind(this));
+				}.bind(this)).sort(function(a, b) {
+					var a = a.datetime ? moment(a.datetime, 'YYYYMMDDhhmmss') : moment().year(1969)
+					var b = b.datetime ? moment(b.datetime, 'YYYYMMDDhhmmss') : moment().year(1969)
+					var diff = b.diff(a)
+					return diff;
+				});
 				this.setState({ results:results, entries:results })
 			}.bind(this))
 			.catch(function(e) {
@@ -96,7 +102,7 @@ module.exports = React.createClass({
 						return (
 							<div className="journey_index_item" onClick={this.editEntry.bind(this, entry)} key={entry._id}>
 								<div className="journey_index_item_title">
-								 {entry.title.substring(0, 24) + ((entry.title.length > 24) ? '...':'') }
+								 {entry.title.substring(0, 24) + ((entry.title.length > 24) ? '...':'') } 
 								</div>	
 
 								<div className="journey_index_item_metadata">

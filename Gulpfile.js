@@ -5,6 +5,7 @@ var preprocess = require('gulp-preprocess');
 var process = require('process');
 var livereload = require('gulp-livereload');
 var webserver = require('gulp-webserver');
+var autoprefixer = require('gulp-autoprefixer');
 
 var sass = require('gulp-sass');
 
@@ -71,6 +72,7 @@ gulp.task('move:css', function() {
 		.pipe(sass({errLogToConsole: true}))
 		
 		
+		.pipe(autoprefixer())
 		.pipe(sourcemaps.write())
 	
     .pipe(gulp.dest('./www'));

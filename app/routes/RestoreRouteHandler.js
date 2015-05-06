@@ -51,13 +51,17 @@ module.exports = React.createClass({
 		retrievePageOfFiles(initialRequest, []);
 	},
 	restoreFromFile: function(file) {
-		getFile(file, function(data) {
-			var journal = JSON.parse(data).map(function(doc){
-				delete doc._rev
-				return doc
-			})
-			this.props.clearDatabaseAndDeauthenticate(journal);
+		var message = "Are you sure?\nThis cannot be undone!"
+		alertify.confirm(message).set('title', 'Restore Journal').set('labels', {ok:'Yes', cancel:'No'}).set('onok', function(){
+			getFile(file, function(data) {
+				var journal = JSON.parse(data).map(function(doc){
+					delete doc._rev
+					return doc
+				})
+				this.props.clearDatabaseAndDeauthenticate(journal);
+			}.bind(this))
 		}.bind(this))
+
 	},
 	deleteFile: function(file) {
 		var message = "Are you sure?\nThis cannot be undone!"
@@ -89,6 +93,11 @@ module.exports = React.createClass({
 		
 		return (
 			<div className="journey_container">
+				<div className="journey_toolbar entry_top">
+					<div className="entry_back" onClick={this.transitionTo.bind(this, 'settings')}>
+						&#8592; back
+					</div>
+				</div>
 				<div className="restore_screen">
 					{fileButtons}
 				</div>

@@ -25,7 +25,9 @@
   "dependencies": {
     "alertifyjs": "^1.4.0",
     "flux": "*",
+    "gulp-autoprefixer": "^2.2.0",
     "keymirror": "*",
+    "moment": "^2.10.2",
     "object-assign": "*",
     "pouchdb": "^3.4.0",
     "react": "*",

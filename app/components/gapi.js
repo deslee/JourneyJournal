@@ -1,6 +1,7 @@
 var React = require('react/addons');
 var Router = require('react-router');
 var handleGapiRequest = require('../utilities/gapiHandler')
+var moment = require('moment')
 
 module.exports = React.createClass({
 	mixins: [ Router.State, Router.Navigation ],
@@ -51,7 +52,7 @@ module.exports = React.createClass({
 	},
 	render: function() {
 		var backupText = this.state.backingUp ? 'Backing up' : 'Backup to drive'
-		var restoreText = this.state.restoring ? 'Restoring' : 'Restore from drive (experimental)'
+		var restoreText = this.state.restoring ? 'Restoring' : 'View backups'
 		return (<div>
 			<button onClick={this.backup}>{backupText}</button><br />
 			<button onClick={this.restore}>{restoreText}</button><br />
@@ -66,10 +67,16 @@ function uploadBackupToDrive(json, callback) {
 	var contentType="application/json"
 
 
-	var dateString = 'backup-' + new Date().getTime() + '.json'
+	var dateString = 'backup-' +moment().format("YYYYMMDDhhmmss") 
+	var fileName = prompt('Choose a name for this backup', dateString);
+
+	if (fileName == null) {
+		return;
+	}
+	fileName = fileName + '.json'
 
 	var metadata = {
-		'title': dateString,
+		'title': fileName,
 		'mimeType': contentType,
 		'parents': [{'id': 'appfolder'}]
 	};

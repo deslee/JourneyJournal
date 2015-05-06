@@ -34,6 +34,22 @@ module.exports = React.createClass({
 				wrongAttempts: 0,
 				verifyKey: false
 			})
+
+			db.get('journey_metadata').then(function(doc) {
+				this.setState({
+					exists: true,
+					loaded: true
+				})
+			}.bind(this)).catch(function(e) {
+				if (e.status===404) {
+					this.setState({
+						exists: false
+					})
+				} else {
+					console.log(err);	
+				}
+			}.bind(this))
+
 		}.bind(this))
 	},
 	componentWillUnmount: function() {
@@ -55,7 +71,8 @@ module.exports = React.createClass({
 				this.setState({
 					db: db,
 					key: undefined,
-					wrongAttempts: 0
+					wrongAttempts: 0,
+					exists: false
 				})
 				this.transitionTo('index');
 			}.bind(this));
@@ -104,8 +121,12 @@ module.exports = React.createClass({
 	render: function() {
 		var handler = <RouteHandler db={this.state.db} foo="bar" authkey={this.state.key} clearDatabaseAndDeauthenticate={this.clearDatabaseAndDeauthenticate} />
 
+		if (!this.state.loaded) {
+			return <div></div>
+		}
+
 		if (!this.state.key) {
-			handler = <Authenticate onAuthenticated={this.setKey} wrongAttempts={this.state.wrongAttempts} verifyKey={this.state.verifyKey} clearDatabaseAndDeauthenticate={this.clearDatabaseAndDeauthenticate}/>
+			handler = <Authenticate exists={this.state.exists} onAuthenticated={this.setKey} wrongAttempts={this.state.wrongAttempts} verifyKey={this.state.verifyKey} clearDatabaseAndDeauthenticate={this.clearDatabaseAndDeauthenticate}/>
 		}
 
 		

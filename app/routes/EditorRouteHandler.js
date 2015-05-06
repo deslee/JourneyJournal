@@ -6,6 +6,7 @@ var alertify = window['alertify'] = require('alertifyjs')
 var dates = require('../utilities/dates')
 var decrypt = require('../utilities/decryptEntry')
 var encrypt = require('../utilities/encryptEntry')
+var moment = require('moment')
 function getNextSave() {
 		var d = new Date()
 		d.setSeconds(d.getSeconds() + 5);
@@ -34,16 +35,20 @@ module.exports = React.createClass({
 					rev: entry._rev
 				},
 				content: entry.content,
-				tags: entry.tags ? entry.tags : []
+				tags: entry.tags ? entry.tags : [],
+				datetime: entry.datetime
 			});
 
 		}.bind(this)).catch(function(err) {
 			if (err.status === 404) {
+				this.setState({
+					datetime: moment().format("YYYYMMDDhhmmss")
+				})
 			}
 			else {
 				console.log(err);
 			}
-		})
+		}.bind(this))
 
 		window.onbeforeunload = function (e) {
 			if (this.state.modified) {
@@ -92,7 +97,8 @@ module.exports = React.createClass({
 		var putDoc = encrypt(this.props.authkey, {
 			_id: id,
 			content: content,
-			tags: this.state.tags
+			tags: this.state.tags,
+			datetime: this.state.datetime
 		})
 
 		if (this.state.doc) {
@@ -193,11 +199,11 @@ module.exports = React.createClass({
 					{deleteElement}
 				</div>
 
-				<textarea autoFocus="true" onChange={this.changed} ref="editor" className="content journey_editor" value={this.state.content}>
+				<textarea onChange={this.changed} ref="editor" className="content journey_editor" value={this.state.content}>
 				</textarea>
 				<div className="journey_toolbar entry_tags" onClick={this.focusTagsInput}>
-					<i className="fa fa-tags"></i>&nbsp;
 					<div className="entry_tags_container">
+					<i className="fa fa-tags"></i>
 						{this.state.tags.map(function(tag) {
 							return <span className="entry_tag" onClick={this.removeTag.bind(this, tag)} key={tag}>{tag}</span>
 						}.bind(this))}
