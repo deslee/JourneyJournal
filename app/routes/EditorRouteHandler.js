@@ -201,9 +201,9 @@ module.exports = React.createClass({
 
 				<textarea onChange={this.changed} ref="editor" className="content journey_editor" value={this.state.content}>
 				</textarea>
-				<div className="journey_toolbar entry_tags" onClick={this.focusTagsInput}>
+				<div className="journey_toolbar entry_tags">
 					<div className="entry_tags_container">
-					<i className="fa fa-tags"></i>
+					<i className="fa fa-tags" onClick={this.focusTagsInput}></i>
 						{this.state.tags.map(function(tag) {
 							return <span className="entry_tag" onClick={this.removeTag.bind(this, tag)} key={tag}>{tag}</span>
 						}.bind(this))}

@@ -92,12 +92,9 @@ main {
 	}
 
 	&.entry_top {
-		padding: 0;
+		padding: 1rem;
 		display: flex;
 		flex-direction: row;
-		> div {
-			padding: 1rem;
-		}
 		.entry_back {
 			cursor: pointer;
 			flex-grow: 1;
@@ -131,6 +128,7 @@ main {
 		.fa {
 			width: 2em;
 			text-align: center;
+			line-height:1.5rem;
 		}
 
 
