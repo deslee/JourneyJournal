@@ -10,7 +10,10 @@ module.exports = React.createClass({
 		}
 	},
 	resetDatabase: function() {
-		this.props.clearDatabaseAndDeauthenticate()
+		var message = "Are you sure?\nThis cannot be undone!"
+		alertify.confirm(message).set('title', 'Delete Journal').set('labels', {ok:'Yes', cancel:'No'}).set('onok', function(){
+			this.props.clearDatabaseAndDeauthenticate()
+		});
 		alertify.error('Journal reset!', 1)
 	},
 	render: function() {

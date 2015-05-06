@@ -145,6 +145,10 @@ gulp.task('watch', function() {
 
 	watch('./app/assets/**/*', 'move:assets');
 });
+gulp.task('production', function(cb) {
+		build_options.isDev = false;
+		runSequence('main', cb);
+})
 
 gulp.task('default', function(cb) {
 	console.log("running in " + (build_options.isDev ? 'development mode' : 'production mode'));
