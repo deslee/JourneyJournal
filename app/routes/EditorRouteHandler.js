@@ -91,7 +91,7 @@ module.exports = React.createClass({
 				doc: response,
 				modified: false
 			})
-			alertify.notify('saving...', 'save', 1)
+			//alertify.notify('saving...', 'save', 1)
 		}.bind(this);
 
 		var putDoc = encrypt(this.props.authkey, {

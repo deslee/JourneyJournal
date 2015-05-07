@@ -21,12 +21,12 @@
     "react-tools": "*",
     "reactify": "*",
     "run-sequence": "^1.0.2",
+    "gulp-autoprefixer": "^2.2.0",
     "sjcl": "^1.0.2"
   },
   "dependencies": {
     "alertifyjs": "^1.4.0",
     "flux": "*",
-    "gulp-autoprefixer": "^2.2.0",
     "keymirror": "*",
     "moment": "^2.10.2",
     "object-assign": "*",
