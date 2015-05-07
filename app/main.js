@@ -14,7 +14,7 @@ var NotFoundRouteHandler = require('./routes/NotFoundRouteHandler');
 var SettingsRouteHandler = require('./routes/SettingsRouteHandler');
 var EditorRouteHandler = require('./routes/EditorRouteHandler');
 var IndexRouteHandler = require('./routes/IndexRouteHandler');
-var restoreRouteHandler = require('./routes/restoreRouteHandler');
+var restoreRouteHandler = require('./routes/RestoreRouteHandler');
 /* deslight require hook - do not modify this line */
 
 var routes = (

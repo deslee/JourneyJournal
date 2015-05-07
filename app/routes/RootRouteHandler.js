@@ -43,7 +43,8 @@ module.exports = React.createClass({
 			}.bind(this)).catch(function(e) {
 				if (e.status===404) {
 					this.setState({
-						exists: false
+						exists: false,
+						loaded: true
 					})
 				} else {
 					console.log(err);	
