@@ -21,7 +21,7 @@ var build_options = {
 
 var external_libraries = [
 	"react/addons","react-router","object-assign","flux","keymirror",
-	'alertifyjs', 'pouchdb'
+	'alertifyjs', 'pouchdb', 'moment'
 ]
 
 /**
