@@ -215,7 +215,7 @@ module.exports = React.createClass({
 						}.bind(this))}
 					</div>
 				</div>
-				<div className={"journey_toolbar entry_tags_input" + (this.state.focused ? ' hide':'')} >
+				<div className={"journey_toolbar entry_tags_input"} >
 					<input className="" onInput={this.tagsInputChanged} onKeyDown={this.tagKeyDown} ref="tags"/>
 				</div>
 			</div>
